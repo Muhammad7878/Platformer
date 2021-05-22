@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import Player from "../entities/Player";
 
 class Play extends Phaser.Scene {
   constructor() {
@@ -9,7 +10,12 @@ class Play extends Phaser.Scene {
     const map = this.createMap();
     const layers = this.createLayers(map);
 
-    this.createPlayer();
+    this.player = this.createPlayer();
+
+    this.physics.add.collider(this.player, layers.platformColliders);
+
+    this.playerSpeed = 200;
+    this.cursors = this.input.keyboard.createCursorKeys();
   }
 
   createMap() {
@@ -19,14 +25,39 @@ class Play extends Phaser.Scene {
   }
   createLayers(map) {
     const teilset = map.getTileset("main_lev_build_1");
+    const platformColliders = map.createStaticLayer(
+      "platform_colliders",
+      teilset
+    );
     const evnitonment = map.createStaticLayer("environment", teilset);
     const platforms = map.createStaticLayer("platforms", teilset);
-    return { evnitonment, platforms };
+
+    // 1 Way to set a collison
+    // platformColliders.setCollisionByExclusion(-1, true);
+
+    //Alternative
+    platformColliders.setCollisionByProperty({ collides: true });
+
+    return { evnitonment, platforms, platformColliders };
   }
   createPlayer() {
-    const player = this.physics.add.sprite(100, 250, "player");
+    const player = new Player(this, 100, 250);
     player.body.setGravityY(500);
     player.setCollideWorldBounds(true);
+
+    return player;
+  }
+
+  update() {
+    const { left, right } = this.cursors;
+
+    if (left.isDown) {
+      this.player.setVelocityX(-this.playerSpeed);
+    } else if (right.isDown) {
+      this.player.setVelocityX(this.playerSpeed);
+    } else {
+      this.player.setVelocityX(0);
+    }
   }
 }
 
